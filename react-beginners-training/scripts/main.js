@@ -1,5 +1,6 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
+const CSSTransitionGroup = require('react-addons-css-transition-group');
 
 const ReactRouter = require('react-router');
 const Router = ReactRouter.Router;
@@ -50,6 +51,16 @@ let App =  React.createClass({
         this.state.fishes[`fish-${timestamp}`] = fish;
         this.setState({fishes: this.state.fishes});
     },
+    removeFromOrder(key) {
+        delete this.state.order[key];
+        this.setState({ order: this.state.order });
+    },
+    removeFish(key) {
+        if(confirm('Are you sure to remove this fish?')) {
+            this.state.fishes[key] = null;
+            this.setState({ fishes: this.state.fishes });
+        }
+    },
     addToOrder(key) {
         this.state.order[key] = this.state.order[key] + 1 || 1;
         this.setState({ order: this.state.order });
@@ -71,8 +82,8 @@ let App =  React.createClass({
                         {Object.keys(this.state.fishes).map(this.renderFish)}
                     </ul>
                 </div>
-                <Order fishes={this.state.fishes} order={this.state.order} />
-                <Inventory addFish={this.addFish} loadSamples={this.loadSamples} fishes={this.state.fishes} linkState={this.linkState} />
+                <Order fishes={this.state.fishes} order={this.state.order} removeFromOrder={this.removeFromOrder} />
+                <Inventory addFish={this.addFish} removeFish={this.removeFish} loadSamples={this.loadSamples} fishes={this.state.fishes} linkState={this.linkState} />
             </div>
         )
     }
@@ -123,7 +134,7 @@ let AddFishForm = React.createClass({
         this.props.addFish(fish);
         this.refs.fishForm.reset();
     },
-    render: function() {
+    render() {
         return (
             <form className="fish-edit" ref="fishForm" onSubmit={this.createFish}>
                 <input type="text" ref="name" placeholder="Fish Name" />
@@ -146,7 +157,7 @@ let AddFishForm = React.createClass({
  */
 
 let Header = React.createClass({
-    render: function() {
+    render() {
         return (
             <header className="top">
                 <h1>Catch
@@ -158,6 +169,9 @@ let Header = React.createClass({
                 <h3 className="tagline"><span>{this.props.tagline}</span></h3>
             </header>
         )
+    },
+    propTypes: {
+        tagline: React.PropTypes.string.isRequired
     }
 });
 
@@ -170,18 +184,22 @@ let Order = React.createClass({
     renderOrder(key) {
         let fish = this.props.fishes[key];
         let count = this.props.order[key];
+        let removeButton = <button onClick={this.props.removeFromOrder.bind(null, key)}>&times;</button>
         if (!fish) {
-            return <li key={key}>Sorry, fish no longer available</li>
+            return <li key={key}>Sorry, fish no longer available {removeButton}</li>
         }
         return (
             <li key={key}>
-                {count}lbs
-                {fish.name}
+                <CSSTransitionGroup component="span" transitionName="count" transitionLeaveTimeout={250} transitionEnterTimeout={250}>
+                    <span key={count}>{count}</span>
+                </CSSTransitionGroup>
+                lbs {fish.name}
                 <span className="price">{helpers.formatPrice(count * fish.price)}</span>
+                {removeButton}
             </li>
         );
     },
-    render: function() {
+    render() {
         let orderIds = Object.keys(this.props.order);
         let total = orderIds.reduce((prevTotal, key) => {
             let fish = this.props.fishes[key];
@@ -196,12 +214,17 @@ let Order = React.createClass({
         return (
             <div className="order-wrap">
                 <h2 className="order-title">Your Order</h2>
-                <ul className="order">
+                <CSSTransitionGroup transitionName="order" transitionEnterTimeout={500} transitionLeaveTimeout={500} className="order" component="ul">
                     {orderIds.map(this.renderOrder)}
                     <li className="total"><strong>Total:</strong>{helpers.formatPrice(total)}</li>
-                </ul>
+                </CSSTransitionGroup>
             </div>
         )
+    },
+    propTypes: {
+        fishes: React.PropTypes.object.isRequired,
+        order: React.PropTypes.object.isRequired,
+        removeFromOrder: React.PropTypes.func.isRequired
     }
 });
 
@@ -216,10 +239,18 @@ let Inventory = React.createClass({
         return (
             <div className="fish-edit" key={key}>
                 <input type="text" valueLink={linkState(`fishes.${key}.name`)} />
+                <input type="text" valueLink={linkState(`fishes.${key}.price`)} />
+                <select valueLink={linkState(`fishes.${key}.status`)}>
+                    <option value="available">Fresh!</option>
+                    <option value="unavailable">Sold Out!</option>
+                </select>
+                <textarea valueLink={linkState(`fishes.${key}.desc`)}></textarea>
+                <input type="text" valueLink={linkState(`fishes.${key}.image`)} />
+                <button onClick={this.props.removeFish.bind(null, key)}>Remove fish</button>
             </div>
         )
     },
-    render: function() {
+    render() {
         return (
             <div>
                 <p>Inventory</p>
@@ -228,6 +259,13 @@ let Inventory = React.createClass({
                 <button onClick={this.props.loadSamples}>Load Sample Fishes</button>
             </div>
         )
+    },
+    propTypes: {
+        linkState: React.PropTypes.func.isRequired,
+        loadSamples: React.PropTypes.func.isRequired,
+        fishes: React.PropTypes.object.isRequired,
+        addFish: React.PropTypes.funct.isRequired,
+        removeFish: React.PropTypes.funct.isRequired
     }
 });
 
@@ -243,7 +281,7 @@ let StorePicker = React.createClass({
         let storeId = this.refs.storeId.value;
         this.history.pushState(null, `/store/${storeId}`);
     },
-    render: function() {
+    render() {
         return (
             <form className="store-selector" onSubmit={this.goToStore}>
                 {/* Here is a PROPER comment on JSX */}
@@ -260,7 +298,7 @@ let StorePicker = React.createClass({
  */
 
 let NotFound = React.createClass({
-    render: function() {
+    render() {
         return(
             <h1>Not Found!</h1>
         )
