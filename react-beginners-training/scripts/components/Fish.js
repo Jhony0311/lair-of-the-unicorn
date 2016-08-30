@@ -5,11 +5,13 @@
 
 import React from 'react';
 import helpers from '../helpers';
+import autobind from 'autobind-decorator';
 
-let Fish = React.createClass({
+@autobind
+class Fish extends React.Component {
     orderFish() {
         this.props.addToOrder(this.props.index);
-    },
+    }
     render() {
         let details = this.props.details;
         let isAvailable = (details.status === 'available' ? true : false);
@@ -26,6 +28,6 @@ let Fish = React.createClass({
             </li>
         )
     }
-});
+}
 
 export default Fish;

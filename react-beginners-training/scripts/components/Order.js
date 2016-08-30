@@ -6,8 +6,10 @@
 import React from 'react';
 import CSSTransitionGroup from 'react-addons-css-transition-group';
 import helpers from '../helpers';
+import autobind from 'autobind-decorator';
 
-let Order = React.createClass({
+@autobind
+class Order extends React.Component {
     renderOrder(key) {
         let fish = this.props.fishes[key];
         let count = this.props.order[key];
@@ -25,7 +27,7 @@ let Order = React.createClass({
                 {removeButton}
             </li>
         );
-    },
+    }
     render() {
         let orderIds = Object.keys(this.props.order);
         let total = orderIds.reduce((prevTotal, key) => {
@@ -47,12 +49,13 @@ let Order = React.createClass({
                 </CSSTransitionGroup>
             </div>
         )
-    },
-    propTypes: {
-        fishes: React.PropTypes.object.isRequired,
-        order: React.PropTypes.object.isRequired,
-        removeFromOrder: React.PropTypes.func.isRequired
     }
-});
+}
+
+Order.propTypes = {
+    fishes: React.PropTypes.object.isRequired,
+    order: React.PropTypes.object.isRequired,
+    removeFromOrder: React.PropTypes.func.isRequired
+};
 
 export default Order;
