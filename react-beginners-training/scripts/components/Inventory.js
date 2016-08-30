@@ -34,7 +34,7 @@ class Inventory extends React.Component {
             </div>
         );
     }
-}
+};
 
 Inventory.propTypes = {
     linkState: React.PropTypes.func.isRequired,
